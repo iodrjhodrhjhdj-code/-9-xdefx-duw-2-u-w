@@ -42,7 +42,7 @@ local function CreateGUI()
 end
 
 local OutputTextBox
-task.delay(7, function() OutputTextBox = CreateGUI() end)  -- Delay GUI initialization by 2 seconds
+task.delay(9, function() OutputTextBox = CreateGUI() end)  -- Delay GUI initialization by 2 seconds
 
 -- Functions for event tracking
 local function SerializeArgument(arg)
