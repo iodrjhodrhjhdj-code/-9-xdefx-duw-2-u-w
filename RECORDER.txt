@@ -1,1 +1,166 @@
-404
+local HttpService = game:GetService("HttpService")
+local UserInputService = game:GetService("UserInputService")
+local Players = game:GetService("Players")
+local Player = Players.LocalPlayer
+
+local RemoteEvents = {}
+local StartTime = os.clock()
+local LoggingActive = true -- Start logging immediately
+
+local Blacklist = {
+    ["ReplicatedStorage.Event.statUpdate"] = true,
+    ["ReplicatedStorage.Event.towerAttacking"] = true,
+    ["ReplicatedStorage.clockUpdate"] = true,
+    ["ReplicatedStorage.Event.preventghost"] = true,
+    ["ReplicatedStorage.Event.SpawnEnemy"] = true,
+    ["ReplicatedStorage.Event.ErrorReport"] = true,
+    ["ReplicatedStorage.ErrorReport"] = true,
+    ["ReplicatedStorage.Event.enemyChangeMaster"] = true,
+    ["ReplicatedStorage.TowerData.orbitalStrikeState"] = true,
+    ["ReplicatedStorage.Event.spawnableUnitAction"] = true,
+    ["ReplicatedStorage.SpawnerScript.spawnUnits"] = true,
+    ["ReplicatedStorage.Notification.server"] = true,
+    ["ReplicatedStorage.WaveMusic.Request"] = true,
+    ["ReplicatedStorage.Settings.Set"] = true
+}
+
+local StopKey = Enum.KeyCode.P -- The key to stop logging
+
+-- Function to create a GUI for displaying JSON and a copy button
+local function CreateGUI()
+    local ScreenGui = Instance.new("ScreenGui")
+    local TextBox = Instance.new("TextBox")
+    local Button = Instance.new("TextButton")
+
+    ScreenGui.Parent = Player:WaitForChild("PlayerGui")
+    ScreenGui.Name = "JSONOutputGui"
+
+    TextBox.Parent = ScreenGui
+    TextBox.Size = UDim2.new(0.3, 0, 0.3, 0)
+    TextBox.Position = UDim2.new(0.7, 0, 0.05, 0)
+    TextBox.TextScaled = true
+    TextBox.ClearTextOnFocus = false
+    TextBox.Text = ""
+    TextBox.TextWrapped = true
+    TextBox.MultiLine = true
+
+    Button.Parent = ScreenGui
+    Button.Size = UDim2.new(0.3, 0, 0.05, 0)
+    Button.Position = UDim2.new(0.7, 0, 0.4, 0)
+    Button.TextScaled = true
+    Button.Text = "Copy to Clipboard"
+
+    Button.MouseButton1Click:Connect(function()
+        setclipboard(TextBox.Text)
+    end)
+
+    return TextBox
+end
+
+local OutputTextBox = CreateGUI()
+
+local function SerializeArgument(arg)
+    local argType = typeof(arg)
+    if argType == "Instance" then
+        return {__type = "Instance", value = arg:GetFullName()}
+    elseif argType == "Vector3" then
+        return {__type = "Vector3", value = {arg.X, arg.Y, arg.Z}}
+    elseif argType == "CFrame" then
+        return {
+            __type = "CFrame",
+            value = {arg:GetComponents()}
+        }
+    elseif argType == "Color3" then
+        return {__type = "Color3", value = {arg.R, arg.G, arg.B}}
+    elseif argType == "EnumItem" then
+        return {__type = "EnumItem", value = tostring(arg)}
+    else
+        return arg
+    end
+end
+
+local function SerializeArguments(...)
+    local serializedArgs = {}
+    for i, arg in ipairs({...}) do
+        table.insert(serializedArgs, SerializeArgument(arg))
+    end
+    return serializedArgs
+end
+
+local function LogRemoteEvent(remote, methodName, ...)
+    if not LoggingActive then
+        return
+    end
+
+    local remotePath = remote:GetFullName()
+    if Blacklist[remotePath] then
+        return
+    end
+
+    local currentTime = os.clock()
+    local eventData = {
+        RemotePath = remotePath,
+        MethodName = methodName,
+        Arguments = SerializeArguments(...),
+        Time = currentTime - StartTime
+    }
+    table.insert(RemoteEvents, eventData)
+    
+    -- Print captured remote event
+    print("Captured remote event:", remotePath, methodName, ...)
+end
+
+local function AsyncLogRemoteEvent(remote, methodName, ...)
+    local args = {...}
+    task.defer(function()
+        local success, errorMessage = pcall(LogRemoteEvent, remote, methodName, unpack(args))
+        if not success then
+            warn("Error logging remote event:", errorMessage)
+        else
+            print("Successfully logged remote event:", remote:GetFullName(), methodName)
+        end
+    end)
+end
+
+local function HookMetamethods()
+    print("Initializing metatable hook...")
+    local mt = getrawmetatable(game)
+    if not mt then
+        warn("Failed to get raw metatable of game")
+        return
+    end
+    local oldNamecall = mt.__namecall
+    setreadonly(mt, false)
+    
+    mt.__namecall = newcclosure(function(self, ...)
+        local methodName = getnamecallmethod()
+        if methodName == "FireServer" or methodName == "InvokeServer" then
+            if LoggingActive then
+                local args = {...}
+                AsyncLogRemoteEvent(self, methodName, unpack(args))
+            end
+        end
+        return oldNamecall(self, ...)
+    end)
+    
+    setreadonly(mt, true)
+    print("Metatable hook initialized.")
+end
+
+local function StopLogging()
+    LoggingActive = false
+    print("Logging stopped by user.")
+    local eventDataString = HttpService:JSONEncode(RemoteEvents)
+    OutputTextBox.Text = eventDataString
+    print("Remote Events Captured: JSON string output to GUI")
+end
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if input.KeyCode == StopKey and not gameProcessed then
+        StopLogging()
+    end
+end)
+
+HookMetamethods()
+print("Script initialized. All remotes are being monitored.")
+
