@@ -21,7 +21,7 @@ local Blacklist = {
     ["ReplicatedStorage.SpawnerScript.spawnUnits"] = true,
     ["ReplicatedStorage.Notification.server"] = true,
     ["ReplicatedStorage.WaveMusic.Request"] = true,
-    ["ReplicatedStorage.Settings.Set"] = true
+    ["ReplicatedStorage.Settings.Set"] = true,
     ["ReplicatedStorage.Event.waveSkip"] = true
 }
 
