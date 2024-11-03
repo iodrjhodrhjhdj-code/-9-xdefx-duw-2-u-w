@@ -42,7 +42,7 @@ local function CreateGUI()
 end
 
 local OutputTextBox
-task.delay(8, function() OutputTextBox = CreateGUI() end)  -- Delay GUI initialization by 2 seconds
+task.delay(7, function() OutputTextBox = CreateGUI() end)  -- Delay GUI initialization by 2 seconds
 
 -- Functions for event tracking
 local function SerializeArgument(arg)
@@ -82,7 +82,12 @@ end
 local function StopLogging()
     LoggingActive = false
     print("Logging stopped by user.")
-    if OutputTextBox then OutputTextBox.Text = HttpService:JSONEncode(RemoteEvents) end
+    -- Wait until the GUI has been created to display the captured events
+    task.spawn(function()
+        while not OutputTextBox do task.wait() end
+        OutputTextBox.Text = HttpService:JSONEncode(RemoteEvents)
+        print("Remote Events Captured: JSON string output to GUI")
+    end)
 end
 
 UserInputService.InputBegan:Connect(function(input, gameProcessed) if input.KeyCode == StopKey and not gameProcessed then StopLogging() end end)
