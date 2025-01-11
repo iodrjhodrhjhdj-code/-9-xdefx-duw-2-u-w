@@ -1,7 +1,13 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
 local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer -- Reference to the player running the script
+
+-- Wait for LocalPlayer to ensure it exists
+local LocalPlayer = Players.LocalPlayer
+while not LocalPlayer do
+    task.wait() -- Wait until LocalPlayer is available
+    LocalPlayer = Players.LocalPlayer
+end
 
 -- Find the Blocks folder
 local Blocks = Workspace:FindFirstChild("Blocks")
@@ -97,11 +103,15 @@ local function applySecondBatchToAllBlocks()
     print("Second batch completed!")
 end
 
--- Apply size effect to all blocks with a delay
+-- Apply size effect only to blocks with the specific effect
 local function awaken()
     for _, block in ipairs(Blocks:GetChildren()) do
-        fireRemote("size", block, { "650" })
-        task.wait(0.05) -- Delay between blocks
+        if hasEffects(block) then
+            fireRemote("size", block, { "650" })
+            task.wait(0.05) -- Delay between blocks
+        else
+            print("Skipping block: " .. block.Name .. " (no effects found)")
+        end
     end
     print("Awaken completed!")
 end
