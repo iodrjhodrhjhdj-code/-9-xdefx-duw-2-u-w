@@ -1,9 +1,8 @@
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Blocks = workspace:WaitForChild("Blocks")
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer -- Reference to the player running the script
-local SocketsFolder = ReplicatedStorage:WaitForChild("Sockets")
-local Remote = SocketsFolder:WaitForChild("VyLCd/1Oq0z88WxNzxdUUeeaCpKC7vYSQI8fyxm+YlA=")
+-- Check if a block already has the effects applied
+local function hasEffects(block)
+    local decal = block:FindFirstChild("effect")
+    return decal and decal:IsA("Decal") and decal.Texture == "rbxassetid://10613976227"
+end
 
 -- Function to fire a remote
 local function fireRemote(command, block, additionalArgs)
@@ -27,7 +26,9 @@ end
 -- First batch of commands
 local function applyFirstBatch(block)
     fireRemote("7756813371", block)
+    task.wait(0.05) -- Delay between remotes
     fireRemote("transparency", block, { "1" })
+    task.wait(0.05)
     Remote:FireServer({
         [1] = "hidedecals",
         [2] = block
@@ -45,11 +46,15 @@ local function applySecondBatch(block)
     fireRemote("amount", block, { "inf" })
 end
 
--- Apply first batch to all blocks with delay
+-- Apply first batch to all blocks with delay and skip blocks with effects
 local function applyFirstBatchToAllBlocks()
     for _, block in ipairs(Blocks:GetChildren()) do
-        applyFirstBatch(block)
-        task.wait(0.1) -- Delay between blocks
+        if not hasEffects(block) then
+            applyFirstBatch(block)
+            task.wait(0.05) -- Delay between blocks
+        else
+            print("Skipping block: " .. block.Name .. " (effects already applied)")
+        end
     end
     print("First batch completed!")
 end
@@ -62,20 +67,21 @@ local function applySecondBatchToAllBlocks()
     print("Second batch completed!")
 end
 
+-- Apply size effect to all blocks with a delay
+local function awaken()
+    for _, block in ipairs(Blocks:GetChildren()) do
+        fireRemote("size", block, { "650" })
+        task.wait(0.05) -- Delay between blocks
+    end
+    print("Awaken completed!")
+end
+
 -- Main function to apply both batches
 local function createNuke()
     applyFirstBatchToAllBlocks()
     task.wait(0.5) -- Optional delay before starting the second batch
     applySecondBatchToAllBlocks()
     print("Create Nuke completed!")
-end
-
--- Apply size effect to all blocks
-local function awaken()
-    for _, block in ipairs(Blocks:GetChildren()) do
-        fireRemote("size", block, { "650" })
-    end
-    print("Awaken completed!")
 end
 
 -- GUI Setup
@@ -124,3 +130,4 @@ end
 
 -- Initialize the GUI
 CreateGUI()
+
