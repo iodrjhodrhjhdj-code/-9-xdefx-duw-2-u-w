@@ -59,7 +59,7 @@ end
 local function awaken()
     for _, block in ipairs(Blocks:GetChildren()) do
         if hasEffectDecal(block) then
-            fireRemote("size", block, { "650" })
+            fireRemote("size", block, { "10" })
             task.wait(0.05) -- Delay between blocks
         end
     end
