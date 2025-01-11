@@ -29,7 +29,10 @@ end
 -- Check if a block has the required ParticleEmitter
 local function hasParticleEmitter(block)
     local emitter = block:FindFirstChild("TopEffect")
-    return emitter and emitter:IsA("ParticleEmitter") and emitter.Texture == "rbxassetid://7756813371"
+    if emitter and emitter:IsA("ParticleEmitter") and emitter.Texture == "rbxassetid://7756813371" then
+        return true
+    end
+    return false
 end
 
 -- Function to fire a remote
@@ -58,7 +61,8 @@ end
 -- Apply size effect to all blocks with the required ParticleEmitter
 local function awaken()
     for _, block in ipairs(Blocks:GetChildren()) do
-        if hasParticleEmitter(block) then
+        local emitter = block:FindFirstChild("TopEffect")
+        if emitter and emitter:IsA("ParticleEmitter") and emitter.Texture == "rbxassetid://7756813371" then
             fireRemote("size", block, { "650" })
             task.wait(0.05) -- Delay between blocks
         end
