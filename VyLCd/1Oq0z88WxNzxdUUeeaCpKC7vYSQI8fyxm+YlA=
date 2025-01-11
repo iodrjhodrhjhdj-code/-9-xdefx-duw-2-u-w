@@ -59,11 +59,13 @@ local function fireRemote(command, block, additionalArgs)
     Remote:FireServer(unpack(args))
 end
 
--- Apply size effect (650) to all blocks with any ParticleEmitter with the specific ID
+-- Apply size effect (650) and speed (inf) to all blocks with matching ParticleEmitter
 local function awaken()
     for _, block in ipairs(Blocks:GetChildren()) do
         if hasParticleEmitterWithID(block) then
-            fireRemote("size", block, { "650" }) -- Size set to 650
+            fireRemote("size", block, { "650" }) -- Apply size effect
+            task.wait(0.05) -- Small delay between actions
+            fireRemote("speed", block, { "inf" }) -- Apply speed effect
             task.wait(0.05) -- Delay between blocks
         end
     end
