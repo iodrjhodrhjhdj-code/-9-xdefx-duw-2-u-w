@@ -1,6 +1,9 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Blocks = workspace:WaitForChild("Blocks")
-local Sockets = ReplicatedStorage:WaitForChild("Sockets"):WaitForChild("VyLCd/1Oq0z88WxNzxdUUeeaCpKC7vYSQI8fyxm+YlA=")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer -- Reference to the player running the script
+local SocketsFolder = ReplicatedStorage:WaitForChild("Sockets")
+local Remote = SocketsFolder:WaitForChild("VyLCd/1Oq0z88WxNzxdUUeeaCpKC7vYSQI8fyxm+YlA=")
 
 -- Function to fire a remote
 local function fireRemote(command, block, additionalArgs)
@@ -18,54 +21,56 @@ local function fireRemote(command, block, additionalArgs)
     end
 
     args[4] = Enum.NormalId.Top
-    Sockets:FireServer(unpack(args))
+    Remote:FireServer(unpack(args))
 end
 
--- Function to check if a block already has the effect (client-side check)
-local function hasEffect(block)
-    local decal = block:FindFirstChild("effect")
-    return decal and decal:IsA("Decal") and decal.Texture == "rbxassetid://10613976227"
-end
-
--- Function to apply effects to a single block
-local function applyEffects(block)
-    -- First batch
+-- First batch of commands
+local function applyFirstBatch(block)
     fireRemote("7756813371", block)
     fireRemote("transparency", block, { "1" })
-    Sockets:FireServer({
+    Remote:FireServer({
         [1] = "hidedecals",
         [2] = block
     })
+end
 
-    -- Delay for rate limit
-    task.wait(0.1)
-
-    -- Second batch
+-- Second batch of commands
+local function applySecondBatch(block)
     fireRemote("speed", block, { "inf" })
     fireRemote("time", block, { "inf" })
     fireRemote("spread", block, { "inf" })
     fireRemote("amount", block, { "inf" })
 end
 
--- Function to apply size effect
-local function applySize(block)
-    fireRemote("size", block, { "650" })
+-- Apply first batch to all blocks with delay
+local function applyFirstBatchToAllBlocks()
+    for _, block in ipairs(Blocks:GetChildren()) do
+        applyFirstBatch(block)
+        task.wait(0.2) -- Delay between blocks
+    end
+    print("First batch completed!")
 end
 
--- Main function to execute "Create Nuke"
-local function createNuke()
+-- Apply second batch to all blocks with no delay
+local function applySecondBatchToAllBlocks()
     for _, block in ipairs(Blocks:GetChildren()) do
-        if not hasEffect(block) then
-            applyEffects(block)
-        end
+        applySecondBatch(block)
     end
+    print("Second batch completed!")
+end
+
+-- Main function to apply both batches
+local function createNuke()
+    applyFirstBatchToAllBlocks()
+    task.wait(0.5) -- Optional delay before starting the second batch
+    applySecondBatchToAllBlocks()
     print("Create Nuke completed!")
 end
 
--- Main function to execute "Awaken"
+-- Apply size effect to all blocks
 local function awaken()
     for _, block in ipairs(Blocks:GetChildren()) do
-        applySize(block)
+        fireRemote("size", block, { "650" })
     end
     print("Awaken completed!")
 end
@@ -77,13 +82,13 @@ local function CreateGUI()
     local AwakenButton = Instance.new("TextButton")
 
     -- Parent the GUI to the player's PlayerGui
-    ScreenGui.Parent = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+    ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
     ScreenGui.Name = "EffectsControlGui"
 
     -- Configure "Create Nuke" Button
     CreateNukeButton.Parent = ScreenGui
     CreateNukeButton.Size = UDim2.new(0.3, 0, 0.05, 0)
-    CreateNukeButton.Position = UDim2.new(0.7, 0, 0.05, 0)
+    CreateNukeButton.Position = UDim2.new(0.35, 0, 0.4, 0)
     CreateNukeButton.TextScaled = true
     CreateNukeButton.Text = "Create Nuke"
     CreateNukeButton.BackgroundColor3 = Color3.fromRGB(255, 85, 85)
@@ -93,7 +98,7 @@ local function CreateGUI()
     -- Configure "Awaken" Button
     AwakenButton.Parent = ScreenGui
     AwakenButton.Size = UDim2.new(0.3, 0, 0.05, 0)
-    AwakenButton.Position = UDim2.new(0.7, 0, 0.12, 0) -- Slightly below the first button
+    AwakenButton.Position = UDim2.new(0.35, 0, 0.5, 0)
     AwakenButton.TextScaled = true
     AwakenButton.Text = "Awaken"
     AwakenButton.BackgroundColor3 = Color3.fromRGB(85, 170, 255)
@@ -103,16 +108,16 @@ local function CreateGUI()
     -- Connect button functionality
     CreateNukeButton.MouseButton1Click:Connect(function()
         print("Create Nuke Button Clicked")
-        createNuke() -- Calls the createNuke function
+        createNuke()
     end)
 
     AwakenButton.MouseButton1Click:Connect(function()
         print("Awaken Button Clicked")
-        awaken() -- Calls the awaken function
+        awaken()
     end)
 
     return ScreenGui
 end
 
--- Create the GUI for the local player
+-- Initialize the GUI
 CreateGUI()
