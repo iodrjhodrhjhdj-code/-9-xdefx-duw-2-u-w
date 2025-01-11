@@ -29,10 +29,10 @@ if not Remote then
     return
 end
 
--- Check if a block already has the effects applied
-local function hasEffects(block)
-    local decal = block:FindFirstChild("effect")
-    return decal and decal:IsA("Decal") and decal.Texture == "rbxassetid://10613976227"
+-- Check if a block already has the required ParticleEmitter
+local function hasParticleEmitter(block)
+    local emitter = block:FindFirstChild("TopEffect")
+    return emitter and emitter:IsA("ParticleEmitter") and emitter.Texture == "rbxassetid://7756813371"
 end
 
 -- Function to fire a remote
@@ -85,7 +85,7 @@ end
 -- Apply first batch to all blocks with delay and skip blocks with effects
 local function applyFirstBatchToAllBlocks()
     for _, block in ipairs(Blocks:GetChildren()) do
-        if not hasEffects(block) then
+        if not hasParticleEmitter(block) then
             applyFirstBatch(block)
             task.wait(0.05) -- Delay between blocks
         else
@@ -103,28 +103,14 @@ local function applySecondBatchToAllBlocks()
     print("Second batch completed!")
 end
 
--- Ensure a decal exists on a block
-local function ensureDecal(block)
-    local decal = block:FindFirstChild("effect")
-    if not decal then
-        decal = Instance.new("Decal")
-        decal.Name = "effect"
-        decal.Texture = "rbxassetid://10613976227"
-        decal.Parent = block
-        print("Added decal to block: " .. block.Name)
-    end
-    return decal
-end
-
--- Apply size effect only to blocks with the specific effect
+-- Apply size effect only to blocks with the specific ParticleEmitter
 local function awaken()
     for _, block in ipairs(Blocks:GetChildren()) do
-        local decal = ensureDecal(block)
-        if decal.Texture == "rbxassetid://10613976227" then
+        if hasParticleEmitter(block) then
             fireRemote("size", block, { "650" })
             task.wait(0.05) -- Delay between blocks
         else
-            print("Skipping block: " .. block.Name .. " (decal texture mismatch)")
+            print("Skipping block: " .. block.Name .. " (no valid ParticleEmitter found)")
         end
     end
     print("Awaken completed!")
@@ -140,4 +126,50 @@ end
 
 -- GUI Setup
 local function CreateGUI()
-    local ScreenGui 
+    local ScreenGui = Instance.new("ScreenGui")
+    local CreateNukeButton = Instance.new("TextButton")
+    local AwakenButton = Instance.new("TextButton")
+
+    -- Wait for PlayerGui to ensure it exists
+    local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+
+    -- Parent the GUI to the player's PlayerGui
+    ScreenGui.Parent = PlayerGui
+    ScreenGui.Name = "EffectsControlGui"
+
+    -- Configure "Create Nuke" Button
+    CreateNukeButton.Parent = ScreenGui
+    CreateNukeButton.Size = UDim2.new(0.3, 0, 0.05, 0)
+    CreateNukeButton.Position = UDim2.new(0.35, 0, 0.4, 0)
+    CreateNukeButton.TextScaled = true
+    CreateNukeButton.Text = "Create Nuke"
+    CreateNukeButton.BackgroundColor3 = Color3.fromRGB(255, 85, 85)
+    CreateNukeButton.TextColor3 = Color3.new(1, 1, 1)
+    CreateNukeButton.Font = Enum.Font.SourceSansBold
+
+    -- Configure "Awaken" Button
+    AwakenButton.Parent = ScreenGui
+    AwakenButton.Size = UDim2.new(0.3, 0, 0.05, 0)
+    AwakenButton.Position = UDim2.new(0.35, 0, 0.5, 0)
+    AwakenButton.TextScaled = true
+    AwakenButton.Text = "Awaken"
+    AwakenButton.BackgroundColor3 = Color3.fromRGB(85, 170, 255)
+    AwakenButton.TextColor3 = Color3.new(1, 1, 1)
+    AwakenButton.Font = Enum.Font.SourceSansBold
+
+    -- Connect button functionality
+    CreateNukeButton.MouseButton1Click:Connect(function()
+        print("Create Nuke Button Clicked")
+        createNuke()
+    end)
+
+    AwakenButton.MouseButton1Click:Connect(function()
+        print("Awaken Button Clicked")
+        awaken()
+    end)
+
+    return ScreenGui
+end
+
+-- Initialize the GUI
+CreateGUI()
