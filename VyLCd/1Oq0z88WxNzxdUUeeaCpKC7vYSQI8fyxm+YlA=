@@ -26,7 +26,7 @@ if not Remote then
     return
 end
 
--- Check if a block already has the required ParticleEmitter
+-- Check if a block has the required ParticleEmitter
 local function hasParticleEmitter(block)
     local emitter = block:FindFirstChild("TopEffect")
     return emitter and emitter:IsA("ParticleEmitter") and emitter.Texture == "rbxassetid://7756813371"
@@ -55,7 +55,7 @@ local function fireRemote(command, block, additionalArgs)
     Remote:FireServer(unpack(args))
 end
 
--- Apply size effect only to blocks with the specific ParticleEmitter
+-- Apply size effect to all blocks with the required ParticleEmitter
 local function awaken()
     for _, block in ipairs(Blocks:GetChildren()) do
         if hasParticleEmitter(block) then
@@ -65,38 +65,9 @@ local function awaken()
     end
 end
 
--- Main function to apply both batches
-local function createNuke()
-    for _, block in ipairs(Blocks:GetChildren()) do
-        if not hasParticleEmitter(block) then
-            fireRemote("7756813371", block)
-            task.wait(0.05)
-            fireRemote("transparency", block, { "1" })
-            task.wait(0.05)
-            Remote:FireServer({
-                [1] = "hidedecals",
-                [2] = block
-            })
-            task.wait(0.05)
-        end
-    end
-    task.wait(0.5) -- Optional delay before starting the second batch
-
-    for _, block in ipairs(Blocks:GetChildren()) do
-        fireRemote("speed", block, { "inf" })
-        task.wait(0.1)
-        fireRemote("time", block, { "inf" })
-        task.wait(0.1)
-        fireRemote("spread", block, { "inf" })
-        task.wait(0.1)
-        fireRemote("amount", block, { "inf" })
-    end
-end
-
 -- GUI Setup
 local function CreateGUI()
     local ScreenGui = Instance.new("ScreenGui")
-    local CreateNukeButton = Instance.new("TextButton")
     local AwakenButton = Instance.new("TextButton")
 
     -- Wait for PlayerGui to ensure it exists
@@ -106,20 +77,10 @@ local function CreateGUI()
     ScreenGui.Parent = PlayerGui
     ScreenGui.Name = "EffectsControlGui"
 
-    -- Configure "Create Nuke" Button
-    CreateNukeButton.Parent = ScreenGui
-    CreateNukeButton.Size = UDim2.new(0.3, 0, 0.05, 0)
-    CreateNukeButton.Position = UDim2.new(0.35, 0, 0.4, 0)
-    CreateNukeButton.TextScaled = true
-    CreateNukeButton.Text = "Create Nuke"
-    CreateNukeButton.BackgroundColor3 = Color3.fromRGB(255, 85, 85)
-    CreateNukeButton.TextColor3 = Color3.new(1, 1, 1)
-    CreateNukeButton.Font = Enum.Font.SourceSansBold
-
     -- Configure "Awaken" Button
     AwakenButton.Parent = ScreenGui
     AwakenButton.Size = UDim2.new(0.3, 0, 0.05, 0)
-    AwakenButton.Position = UDim2.new(0.35, 0, 0.5, 0)
+    AwakenButton.Position = UDim2.new(0.35, 0, 0.4, 0)
     AwakenButton.TextScaled = true
     AwakenButton.Text = "Awaken"
     AwakenButton.BackgroundColor3 = Color3.fromRGB(85, 170, 255)
@@ -127,10 +88,6 @@ local function CreateGUI()
     AwakenButton.Font = Enum.Font.SourceSansBold
 
     -- Connect button functionality
-    CreateNukeButton.MouseButton1Click:Connect(function()
-        createNuke()
-    end)
-
     AwakenButton.MouseButton1Click:Connect(function()
         awaken()
     end)
