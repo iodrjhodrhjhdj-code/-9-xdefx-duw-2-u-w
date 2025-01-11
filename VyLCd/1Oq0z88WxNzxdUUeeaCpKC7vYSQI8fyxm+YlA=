@@ -1,3 +1,28 @@
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Workspace = game:GetService("Workspace")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer -- Reference to the player running the script
+
+-- Find the Blocks folder
+local Blocks = Workspace:FindFirstChild("Blocks")
+if not Blocks then
+    warn("Blocks folder not found in Workspace!")
+    return
+end
+
+-- Find the Sockets folder and Remote
+local SocketsFolder = ReplicatedStorage:FindFirstChild("Sockets")
+if not SocketsFolder then
+    warn("Sockets folder not found in ReplicatedStorage!")
+    return
+end
+
+local Remote = SocketsFolder:FindFirstChild("VyLCd/1Oq0z88WxNzxdUUeeaCpKC7vYSQI8fyxm+YlA=")
+if not Remote then
+    warn("Remote not found in Sockets folder!")
+    return
+end
+
 -- Check if a block already has the effects applied
 local function hasEffects(block)
     local decal = block:FindFirstChild("effect")
@@ -6,6 +31,11 @@ end
 
 -- Function to fire a remote
 local function fireRemote(command, block, additionalArgs)
+    if not block then
+        warn("Block is nil!")
+        return
+    end
+
     local args = {
         [1] = "effect",
         [2] = block,
@@ -90,8 +120,11 @@ local function CreateGUI()
     local CreateNukeButton = Instance.new("TextButton")
     local AwakenButton = Instance.new("TextButton")
 
+    -- Wait for PlayerGui to ensure it exists
+    local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+
     -- Parent the GUI to the player's PlayerGui
-    ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+    ScreenGui.Parent = PlayerGui
     ScreenGui.Name = "EffectsControlGui"
 
     -- Configure "Create Nuke" Button
