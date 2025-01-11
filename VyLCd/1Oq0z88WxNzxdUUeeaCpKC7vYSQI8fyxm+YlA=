@@ -37,8 +37,11 @@ end
 -- Second batch of commands
 local function applySecondBatch(block)
     fireRemote("speed", block, { "inf" })
+    task.wait(0.1) -- Delay between remotes in second batch
     fireRemote("time", block, { "inf" })
+    task.wait(0.1)
     fireRemote("spread", block, { "inf" })
+    task.wait(0.1)
     fireRemote("amount", block, { "inf" })
 end
 
@@ -46,12 +49,12 @@ end
 local function applyFirstBatchToAllBlocks()
     for _, block in ipairs(Blocks:GetChildren()) do
         applyFirstBatch(block)
-        task.wait(0.2) -- Delay between blocks
+        task.wait(0.1) -- Delay between blocks
     end
     print("First batch completed!")
 end
 
--- Apply second batch to all blocks with no delay
+-- Apply second batch to all blocks with delay
 local function applySecondBatchToAllBlocks()
     for _, block in ipairs(Blocks:GetChildren()) do
         applySecondBatch(block)
