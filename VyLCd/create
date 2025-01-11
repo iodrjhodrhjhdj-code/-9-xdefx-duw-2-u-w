@@ -1,0 +1,91 @@
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Workspace = game:GetService("Workspace")
+local Players = game:GetService("Players")
+
+-- Wait for LocalPlayer to ensure it exists
+local LocalPlayer = Players.LocalPlayer
+while not LocalPlayer do
+    task.wait() -- Wait until LocalPlayer is available
+    LocalPlayer = Players.LocalPlayer
+end
+
+-- Find the Blocks folder
+local Blocks = Workspace:FindFirstChild("Blocks")
+if not Blocks then
+    return
+end
+
+-- Find the Sockets folder and Remote
+local SocketsFolder = ReplicatedStorage:FindFirstChild("Sockets")
+if not SocketsFolder then
+    return
+end
+
+local Remote = SocketsFolder:FindFirstChild("VyLCd/1Oq0z88WxNzxdUUeeaCpKC7vYSQI8fyxm+YlA=")
+if not Remote then
+    return
+end
+
+-- Check if a block has any ParticleEmitter with the specific ID
+local function hasParticleEmitterWithID(block)
+    for _, child in ipairs(block:GetChildren()) do
+        if child:IsA("ParticleEmitter") and child.Texture == "rbxassetid://7756813371" then
+            return true
+        end
+    end
+    return false
+end
+
+-- Function to fire a remote
+local function fireRemote(command, block, additionalArgs)
+    if not block then
+        return
+    end
+
+    local args = {
+        [1] = "effect",
+        [2] = block,
+        [3] = { [1] = "!effect", [2] = command }
+    }
+
+    -- Add additional arguments if provided
+    if additionalArgs then
+        for _, v in ipairs(additionalArgs) do
+            table.insert(args[3], v)
+        end
+    end
+
+    args[4] = Enum.NormalId.Top
+    Remote:FireServer(unpack(args))
+end
+
+-- Create Nuke: Apply the initial batch of effects
+local function createNuke()
+    for _, block in ipairs(Blocks:GetChildren()) do
+        if hasParticleEmitterWithID(block) then
+            fireRemote("transparency", block, { "1" }) -- Set transparency
+            task.wait(0.05)
+            fireRemote("hidedecals", block) -- Hide decals
+            task.wait(0.05)
+            fireRemote("spread", block, { "inf" }) -- Set spread to infinite
+            task.wait(0.05)
+            fireRemote("amount", block, { "inf" }) -- Set amount to infinite
+            task.wait(0.05)
+        end
+    end
+end
+
+-- Awaken: Apply size and speed effects
+local function awaken()
+    for _, block in ipairs(Blocks:GetChildren()) do
+        if hasParticleEmitterWithID(block) then
+            fireRemote("size", block, { "650" }) -- Apply size effect
+            task.wait(0.05)
+            fireRemote("speed", block, { "inf" }) -- Apply speed effect
+            task.wait(0.05)
+        end
+    end
+end
+
+-- Automatically call the desired functions
+createNuke()
