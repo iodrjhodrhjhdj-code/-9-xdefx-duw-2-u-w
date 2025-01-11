@@ -26,10 +26,25 @@ if not Remote then
     return
 end
 
--- Check if a block has the required Decal
-local function hasEffectDecal(block)
-    local decal = block:FindFirstChild("effect")
-    return decal and decal:IsA("Decal")
+-- List of possible directional ParticleEmitter names
+local directionalEmitters = {
+    "TopEffect",
+    "RightEffect",
+    "LeftEffect",
+    "BackEffect",
+    "FrontEffect",
+    "BottomEffect"
+}
+
+-- Check if a block has any of the required ParticleEmitters with the specific ID
+local function hasDirectionalEmitterWithID(block)
+    for _, emitterName in ipairs(directionalEmitters) do
+        local emitter = block:FindFirstChild(emitterName)
+        if emitter and emitter:IsA("ParticleEmitter") and emitter.Texture == "rbxassetid://7756813371" then
+            return true
+        end
+    end
+    return false
 end
 
 -- Function to fire a remote
@@ -55,45 +70,15 @@ local function fireRemote(command, block, additionalArgs)
     Remote:FireServer(unpack(args))
 end
 
--- Apply size effect to all blocks with the required Decal
+-- Apply size effect (650) to all blocks with the required ParticleEmitters and ID
 local function awaken()
     for _, block in ipairs(Blocks:GetChildren()) do
-        if hasEffectDecal(block) then
-            fireRemote("size", block, { "10" })
+        if hasDirectionalEmitterWithID(block) then
+            fireRemote("size", block, { "650" }) -- Size set to 650
             task.wait(0.05) -- Delay between blocks
         end
     end
 end
 
--- GUI Setup
-local function CreateGUI()
-    local ScreenGui = Instance.new("ScreenGui")
-    local AwakenButton = Instance.new("TextButton")
-
-    -- Wait for PlayerGui to ensure it exists
-    local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
-
-    -- Parent the GUI to the player's PlayerGui
-    ScreenGui.Parent = PlayerGui
-    ScreenGui.Name = "EffectsControlGui"
-
-    -- Configure "Awaken" Button
-    AwakenButton.Parent = ScreenGui
-    AwakenButton.Size = UDim2.new(0.3, 0, 0.05, 0)
-    AwakenButton.Position = UDim2.new(0.35, 0, 0.4, 0)
-    AwakenButton.TextScaled = true
-    AwakenButton.Text = "Awaken"
-    AwakenButton.BackgroundColor3 = Color3.fromRGB(85, 170, 255)
-    AwakenButton.TextColor3 = Color3.new(1, 1, 1)
-    AwakenButton.Font = Enum.Font.SourceSansBold
-
-    -- Connect button functionality
-    AwakenButton.MouseButton1Click:Connect(function()
-        awaken()
-    end)
-
-    return ScreenGui
-end
-
--- Initialize the GUI
-CreateGUI()
+-- Automatically run the awaken function
+awaken()
