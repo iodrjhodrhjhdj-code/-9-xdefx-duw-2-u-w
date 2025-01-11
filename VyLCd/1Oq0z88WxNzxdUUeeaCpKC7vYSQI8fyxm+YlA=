@@ -12,20 +12,17 @@ end
 -- Find the Blocks folder
 local Blocks = Workspace:FindFirstChild("Blocks")
 if not Blocks then
-    warn("Blocks folder not found in Workspace!")
     return
 end
 
 -- Find the Sockets folder and Remote
 local SocketsFolder = ReplicatedStorage:FindFirstChild("Sockets")
 if not SocketsFolder then
-    warn("Sockets folder not found in ReplicatedStorage!")
     return
 end
 
 local Remote = SocketsFolder:FindFirstChild("VyLCd/1Oq0z88WxNzxdUUeeaCpKC7vYSQI8fyxm+YlA=")
 if not Remote then
-    warn("Remote not found in Sockets folder!")
     return
 end
 
@@ -38,7 +35,6 @@ end
 -- Function to fire a remote
 local function fireRemote(command, block, additionalArgs)
     if not block then
-        warn("Block is nil!")
         return
     end
 
@@ -59,69 +55,42 @@ local function fireRemote(command, block, additionalArgs)
     Remote:FireServer(unpack(args))
 end
 
--- First batch of commands
-local function applyFirstBatch(block)
-    fireRemote("7756813371", block)
-    task.wait(0.05) -- Delay between remotes
-    fireRemote("transparency", block, { "1" })
-    task.wait(0.05)
-    Remote:FireServer({
-        [1] = "hidedecals",
-        [2] = block
-    })
-end
-
--- Second batch of commands
-local function applySecondBatch(block)
-    fireRemote("speed", block, { "inf" })
-    task.wait(0.1) -- Delay between remotes in second batch
-    fireRemote("time", block, { "inf" })
-    task.wait(0.1)
-    fireRemote("spread", block, { "inf" })
-    task.wait(0.1)
-    fireRemote("amount", block, { "inf" })
-end
-
--- Apply first batch to all blocks with delay and skip blocks with effects
-local function applyFirstBatchToAllBlocks()
-    for _, block in ipairs(Blocks:GetChildren()) do
-        if not hasParticleEmitter(block) then
-            applyFirstBatch(block)
-            task.wait(0.05) -- Delay between blocks
-        else
-            print("Skipping block: " .. block.Name .. " (effects already applied)")
-        end
-    end
-    print("First batch completed!")
-end
-
--- Apply second batch to all blocks with delay
-local function applySecondBatchToAllBlocks()
-    for _, block in ipairs(Blocks:GetChildren()) do
-        applySecondBatch(block)
-    end
-    print("Second batch completed!")
-end
-
 -- Apply size effect only to blocks with the specific ParticleEmitter
 local function awaken()
     for _, block in ipairs(Blocks:GetChildren()) do
         if hasParticleEmitter(block) then
             fireRemote("size", block, { "650" })
             task.wait(0.05) -- Delay between blocks
-        else
-            print("Skipping block: " .. block.Name .. " (no valid ParticleEmitter found)")
         end
     end
-    print("Awaken completed!")
 end
 
 -- Main function to apply both batches
 local function createNuke()
-    applyFirstBatchToAllBlocks()
+    for _, block in ipairs(Blocks:GetChildren()) do
+        if not hasParticleEmitter(block) then
+            fireRemote("7756813371", block)
+            task.wait(0.05)
+            fireRemote("transparency", block, { "1" })
+            task.wait(0.05)
+            Remote:FireServer({
+                [1] = "hidedecals",
+                [2] = block
+            })
+            task.wait(0.05)
+        end
+    end
     task.wait(0.5) -- Optional delay before starting the second batch
-    applySecondBatchToAllBlocks()
-    print("Create Nuke completed!")
+
+    for _, block in ipairs(Blocks:GetChildren()) do
+        fireRemote("speed", block, { "inf" })
+        task.wait(0.1)
+        fireRemote("time", block, { "inf" })
+        task.wait(0.1)
+        fireRemote("spread", block, { "inf" })
+        task.wait(0.1)
+        fireRemote("amount", block, { "inf" })
+    end
 end
 
 -- GUI Setup
@@ -159,12 +128,10 @@ local function CreateGUI()
 
     -- Connect button functionality
     CreateNukeButton.MouseButton1Click:Connect(function()
-        print("Create Nuke Button Clicked")
         createNuke()
     end)
 
     AwakenButton.MouseButton1Click:Connect(function()
-        print("Awaken Button Clicked")
         awaken()
     end)
 
