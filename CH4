@@ -2,7 +2,6 @@ local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 local Player = Players.LocalPlayer
---Gojo, Future Clock, Dj, Alliance Dj, Tiant Speaker Toilet, Titan Silver, Uncle
 local initialSize = Vector2.new(0, 0)
 local replayButton
 local connection
